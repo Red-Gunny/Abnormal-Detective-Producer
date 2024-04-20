@@ -4,8 +4,8 @@ import cloud_club.kafka_project.message.Message;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.core.KafkaTemplate;
-import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
 import java.util.HashMap;
@@ -13,6 +13,7 @@ import java.util.UUID;
 
 @RequiredArgsConstructor
 @Service
+@Slf4j
 public class AbnormalCheckService {
 
     private final ObjectMapper objectMapper;
@@ -29,7 +30,14 @@ public class AbnormalCheckService {
                 .message(contents)
                 .build();
         String sendMsg = objectMapper.writeValueAsString(message);
-        template.send("message", sendMsg);
+        template.send("message", sendMsg)
+                .whenComplete((result, throwable) -> {
+                    if(throwable == null) {
+                        log.info("send successfully");
+                    } else {
+                        log.info("send error");
+                    }
+                });
         msgSeqMap.put(userId, nextMsgSeq);
         return true;
     }
